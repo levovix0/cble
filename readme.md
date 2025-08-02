@@ -19,7 +19,7 @@ then, the build will automatically rebuild itself if needed, so just run
 ```
 
 # Cmd
-in [examples/simple](https://github.com/levovix0/cble/tree/examples/simple) we have:
+in [examples/simple](https://github.com/levovix0/cble/tree/main/examples/simple) we have:
 ```
 main.c
 package.nim
@@ -70,7 +70,7 @@ make sure setCurrentDirectory is called after rebuild_the_build_and_rerun_if_cha
 # Package managing
 nimble packages can be `require`d and can later be added to Cmd via cmd.useRequiredPackages
 
-[examples/packages](https://github.com/levovix0/cble/tree/examples/packages)
+[examples/packages](https://github.com/levovix0/cble/tree/main/examples/packages)
 ```nim
 import cble
 
@@ -133,7 +133,7 @@ if "run" in argv:
 # Recipes
 cble can be used like gnu/make (with timestamp-based lazy-rebuilding and stuff) with recipes
 
-[examples/makefile](https://github.com/levovix0/cble/tree/examples/makefile)
+[examples/makefile](https://github.com/levovix0/cble/tree/main/examples/makefile)
 ```nim
 import cble
 
