@@ -1,0 +1,16 @@
+# files without extension
+*
+!*.*
+!*/
+
+# hidden files
+.*
+!.gitignore
+
+build/
+*.exe
+*.so
+*.dll
+*.o
+*.out
+
