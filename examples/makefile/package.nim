@@ -6,11 +6,11 @@ act_as_makefile:
   createDir bin
 
 
-  bin"main".recipe bin"main.o":
+  bin"main".recipe( bin"main.o" ):
     exec cc, output(bin"main"), source(bin"main.o")
 
-  bin"main.o".recipe "main.c":
+  bin"main.o".recipe( "main.c" ):
     exec cc, "-c", output(bin"main.o"), source("main.c")
 
-  "run".recipe bin"main":
+  "run".recipe( bin"main" ):
     exec bin"main"

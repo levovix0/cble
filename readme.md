@@ -29,9 +29,9 @@ package.nim
 ```nim
 import cble
 
-wrapErrorHandling:
-  rebuild_the_build_and_rerun_if_changed("rebuild-build" in argv)
+rebuild_the_build_and_rerun_if_changed()
 
+wrapErrorHandling:
   with_cmd_run:
     cmd.cc
     cmd.output src"main"
@@ -141,13 +141,13 @@ act_as_makefile:
   const_path bin: "bin"
   createDir bin
 
-  bin"main".recipe bin"main.o":
+  bin"main".recipe( bin"main.o" ):
     exec cc, output(bin"main"), source(bin"main.o")
 
-  bin"main.o".recipe "main.c":
+  bin"main.o".recipe( "main.c" ):
     exec cc, "-c", output(bin"main.o"), source("main.c")
 
-  "run".recipe bin"main":
+  "run".recipe( bin"main" ):
     exec bin"main"
 ```
 first target will be built as the default

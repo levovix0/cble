@@ -237,7 +237,8 @@ proc rebuild_the_build_and_rerun_if_changed_impl(source: string, force: bool) =
     var cmd = Cmd()
 
     for i in 0..paramCount():
-      cmd.add paramStr(i).quoted
+      if paramStr(i) != "rebuild-build":
+        cmd.add paramStr(i).quoted
 
     if log_exec:
       echo "\27[36mre-Exec:\27[37m ", cmd.args, "\27[0m"
@@ -250,7 +251,7 @@ template rebuild_the_build* =
   rebuild_the_build_impl(instantiationInfo(index = 0, fullPaths = true).filename)
 
 
-template rebuild_the_build_and_rerun_if_changed*(force = false) =
+template rebuild_the_build_and_rerun_if_changed*(force = "rebuild-build" in argv) =
   bind rebuild_the_build_and_rerun_if_changed_impl
   rebuild_the_build_and_rerun_if_changed_impl(instantiationInfo(index = 0, fullPaths = true).filename, force)
 
@@ -399,12 +400,26 @@ proc split_args*(argv: var seq[string], start_from: string): seq[string] =
     argv = argv[0..i]
 
 
+proc pop*(argv: var seq[string], arg: string): bool =
+  let i = argv.find arg
+  if i == -1: return false
+  else:
+    argv.delete i
+    return true
+
+
 template withCd*(dir: string, body: untyped) =
   bind getCurrentDir, setCurrentDir
   let oldDir = getCurrentDir()
   setCurrentDir(dir)
   body
   setCurrentDir(oldDir)
+
+
+
+proc allFilesRec*(dir: string, relative = false): seq[string] =
+  for p in walkDirRec(dir, relative = relative):
+    result.add p
 
 
 
@@ -416,6 +431,8 @@ proc add_recipe*(outFile: string, inputs: seq[string], build: seq[Cmd]) =
 
 
 proc rebuild_with_deps*(recipe: Recipe, if_needed = true) =
+  # todo: parallel
+
   for dep in recipe.inputs:
     if dep in recipes:
       rebuild_with_deps recipes[dep], if_needed
@@ -443,7 +460,9 @@ macro recipe*(outFilePath: string, inputs: varargs[string], body: untyped) =
   let strip = bindSym("strip")
   let cmds = genSym(nskVar, "cmds")
 
-  let inputsSeq = nnkPrefix.newTree(ident("@"), nnkBracket.newTree(inputs[0..^1]))
+  let inputsSeq =
+    if inputs.kind == nnkBracket: nnkPrefix.newTree(ident("@"), nnkBracket.newTree(inputs[0..^1]))
+    else: inputs
   
   var body = body
   if body.kind == nnkTripleStrLit or body.kind == nnkStmtList and body[0].kind == nnkTripleStrLit:
@@ -508,11 +527,10 @@ macro build_cmd*(cmd: var Cmd, body: varargs[untyped]) =
     result.add build_cmd_aux(x, cmd)
 
 
-template act_as_makefile*(body: untyped) =
-  wrapErrorHandling:
-    rebuild_the_build_and_rerun_if_changed("rebuild-build" in argv)
+template act_as_makefile*(path: string, body: untyped) =
+  rebuild_the_build_and_rerun_if_changed("rebuild-build" in argv)
 
-  setCurrentDir parentDir(instantiationInfo(index = 0, fullPaths = true).filename)
+  setCurrentDir path
 
   let if_needed = "force" notin argv
 
@@ -536,4 +554,8 @@ template act_as_makefile*(body: untyped) =
           nil
       if recipe != nil:
         rebuild_with_deps recipe, if_needed
+
+
+template act_as_makefile*(body: untyped) =
+  act_as_makefile(parentDir(instantiationInfo(index = 0, fullPaths = true).filename), body)
 
